@@ -58,7 +58,7 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 - [x] Smoke-test upload, answerable question, citation inspection, and unsupported question against the local server.
 - [x] Check keyboard access, visible focus, labels, responsive layout, and readable contrast.
 - [x] Deploy the Vite build to Vercel and set `VITE_API_BASE_URL` to the backend URL.
-- [ ] Verify the deployed client can reach the server and that server CORS allows only the client’s production origin.
+- [x] Verify the deployed client can reach the server and that server CORS allows only the client’s production origin.
 
 ## Out of scope
 
