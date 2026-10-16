@@ -2,7 +2,8 @@
 
 A small browser UI for the RAG Sourcebook server: upload `.txt` and `.md`
 documents, list what is indexed, and ask questions that come back with citations
-and the retrieved passages they were drawn from.
+and the retrieved passages they were drawn from. Answers stream in as they are
+written, and each question shows the tool calls the server made on the way.
 
 The client is an independent React/Vite/TypeScript app. It talks to the server
 over HTTP and never imports server code. The API contract is maintained in
@@ -11,7 +12,10 @@ over HTTP and never imports server code. The API contract is maintained in
 ## Stack
 
 React 19, Vite, TypeScript, Tailwind CSS v4, shadcn/ui components vendored into
-`src/components/ui`, Lucide icons, Vitest with React Testing Library, and pnpm.
+`src/components/ui`, Lucide icons, Geist and Geist Mono via Fontsource, Vitest
+with React Testing Library, and pnpm. The palette is dark-only: one set of
+tokens in `:root`, with `class="dark"` on `<html>` so the vendored components'
+`dark:` variants resolve.
 
 ## Prerequisites
 
@@ -56,6 +60,7 @@ server allows by default (`CLIENT_ORIGIN`).
 | `GET /api/documents` | `{ documents: DocumentSummary[] }` |
 | `POST /api/documents` with `{ filename, content }` | The indexed `DocumentSummary` |
 | `POST /api/chat` with `{ question }` | `{ answer, citations, retrievedChunks }` |
+| `POST /api/chat/stream` with `{ question }` | Server-Sent Events: `tool-call`, `tool-result`, `text-delta`, `finish` (carrying the `POST /api/chat` body), and `error` |
 
 ## Deployment
 
