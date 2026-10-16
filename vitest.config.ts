@@ -7,6 +7,9 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
+      // src/styles.test.ts reads the stylesheet with a `?raw` import, which the
+      // default CSS stub would replace with an empty string.
+      css: true,
     },
   }),
 )

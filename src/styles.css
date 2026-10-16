@@ -65,7 +65,10 @@
     --accent-foreground: #0f172a;
     --destructive: #dc2626;
     --border: #e4ecfc;
-    --input: #e4ecfc;
+    /* Control boundaries (file input, textarea) are the only thing identifying
+       those fields, so this is darker than the decorative --border: 4.7:1 on
+       the page background, comfortably above the 3:1 that WCAG 1.4.11 asks for. */
+    --input: #64748b;
     --ring: #2563eb;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
