@@ -3,5 +3,13 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "compilerOptions": {
+    // Read by tooling that starts at the repository root, such as the shadcn
+    // CLI. Kept in step with tsconfig.app.json, which is the project that
+    // actually compiles src/.
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
 }

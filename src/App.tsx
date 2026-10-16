@@ -1,8 +1,12 @@
+import { useState } from 'react'
+import { DocumentLibrary } from '@/components/DocumentLibrary'
+import { DocumentUpload } from '@/components/DocumentUpload'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 export default function App() {
+  // Bumped after a successful upload; remounting the library re-reads the list.
+  const [libraryVersion, setLibraryVersion] = useState(0)
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-14">
       <header className="flex flex-col gap-2">
@@ -21,12 +25,13 @@ export default function App() {
             Documents
           </h2>
           <Card>
-            <CardContent className="flex flex-col gap-2">
-              <Label htmlFor="document-upload">Upload document</Label>
-              <Input id="document-upload" type="file" accept=".txt,.md" />
-              <p className="text-xs text-muted-foreground">
-                Plain text or Markdown, up to 1 MiB.
-              </p>
+            <CardContent>
+              <DocumentUpload onUploaded={() => setLibraryVersion((version) => version + 1)} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <DocumentLibrary key={libraryVersion} />
             </CardContent>
           </Card>
         </section>
