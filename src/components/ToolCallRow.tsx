@@ -98,6 +98,14 @@ function Result({ step }: { step: ToolStep }) {
     return <p className="text-xs text-muted-foreground">Searching the sourcebook…</p>
   }
 
+  if (step.state === 'error') {
+    return (
+      <p className="text-xs text-muted-foreground">
+        The search failed, so the model was not asked.
+      </p>
+    )
+  }
+
   if (step.hits === undefined || step.hits.length === 0) {
     return (
       <p className="text-xs text-muted-foreground">
