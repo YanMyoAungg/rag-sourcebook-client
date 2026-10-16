@@ -9,6 +9,10 @@ The client is an independent React/Vite/TypeScript app. It talks to the server
 over HTTP and never imports server code. The API contract is maintained in
 [`../server/PLAN.md`](../server/PLAN.md).
 
+An implementation guide explaining the app feature by feature — the streaming
+client, the thread reducer, the tool trace, the dark palette, and the parts that
+are easy to get wrong — is in [`docs/`](docs/README.md).
+
 ## Stack
 
 React 19, Vite, TypeScript, Tailwind CSS v4, shadcn/ui components vendored into
@@ -60,7 +64,7 @@ server allows by default (`CLIENT_ORIGIN`).
 | `GET /api/documents` | `{ documents: DocumentSummary[] }` |
 | `POST /api/documents` with `{ filename, content }` | The indexed `DocumentSummary` |
 | `POST /api/chat` with `{ question }` | `{ answer, citations, retrievedChunks }` |
-| `POST /api/chat/stream` with `{ question }` | Server-Sent Events: `tool-call`, `tool-result`, `text-delta`, `finish` (carrying the `POST /api/chat` body), and `error` |
+| `POST /api/chat/stream` with `{ question }` | Server-Sent Events: `tool` (running, then complete), `text-delta`, `finish` (carrying the `POST /api/chat` body), and `error` |
 
 ## Deployment
 
