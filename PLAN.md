@@ -76,7 +76,7 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 - [x] Re-tokenise the palette as a single dark set on Geist's values: near-black canvas, white-alpha borders, one functional blue accent.
 - [x] Set `color-scheme: dark` and a matching `theme-color`, and use Geist Mono with tabular numerals for tool names, filenames, durations, and relevance scores.
 - [x] Extend the palette contrast test to the new values; check keyboard access, focus, reduced motion, and 375/768/1440 widths.
-- [ ] Redeploy to Vercel and smoke-test the live trace, an abstention, and citation evidence against the deployed server.
+- [x] Redeploy to Vercel and smoke-test the live trace, an abstention, and citation evidence against the deployed server.
 
 ## Out of scope
 
