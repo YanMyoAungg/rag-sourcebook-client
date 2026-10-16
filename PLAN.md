@@ -16,6 +16,7 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 - `GET /api/documents` → `{ documents: DocumentSummary[] }`
 - `POST /api/documents` → JSON `{ filename: string; content: string }` → indexed document summary
 - `POST /api/chat` → `{ question: string }` → `{ answer: string; citations: Citation[]; retrievedChunks: SearchHit[] }`
+- `POST /api/chat/stream` → `{ question: string }` → Server-Sent Events: `tool-call`, `tool-result`, `text-delta`, `finish` (carrying the `POST /api/chat` body), and `error`.
 - Configure the server origin with `VITE_API_BASE_URL`.
 
 ## Scope
@@ -60,6 +61,24 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 - [x] Deploy the Vite build to Vercel and set `VITE_API_BASE_URL` to the backend URL.
 - [x] Verify the deployed client can reach the server and that server CORS allows only the client’s production origin.
 
+### Task 5. Stream the answer and show the tool activity
+
+**Files:** `src/api/chat.ts`, `src/components/ChatPanel.tsx`, `src/components/ActivityTrace.tsx`, `src/components/ToolCallRow.tsx`, `src/components/chatThread.ts`, `src/components/ui/collapsible.tsx`, related tests.
+
+- [x] Test the SSE frame parser: frames split across reads, multi-line data, and the finish and error events.
+- [x] Test the turn reducer: ordered steps, streamed text, abstention with no step, and the error state.
+- [x] Read `POST /api/chat/stream` with native `fetch` and a `ReadableStream` reader, abortable through `AbortController`.
+- [x] Render one collapsible row per tool call showing status, duration, parameters, and result; summarise each row once it finishes.
+- [x] Turn the panel into a conversation thread with autoscroll, a stop control, an empty state, and the existing evidence panel.
+
+### Task 6. Apply the Geist dark theme and redeploy
+
+- [x] Re-tokenise the palette as a single dark set on Geist's values: near-black canvas, white-alpha borders, one functional blue accent.
+- [x] Set `color-scheme: dark` and a matching `theme-color`, and use Geist Mono with tabular numerals for tool names, filenames, durations, and relevance scores.
+- [x] Extend the palette contrast test to the new values; check keyboard access, focus, reduced motion, and 375/768/1440 widths.
+- [ ] Redeploy to Vercel and smoke-test the live trace, an abstention, and citation evidence against the deployed server.
+
 ## Out of scope
 
 - Authentication, client-side document persistence, direct database access, server-side RAG logic, and a client-hosted MCP implementation.
+- Cross-session conversation history: the thread lives in memory for the tab and is not stored.

@@ -53,17 +53,24 @@ export async function requestJson<T>(path: string, init?: RequestInit): Promise<
     )
   }
 
-  const body = await readJson(response)
-
   if (!response.ok) {
-    throw new ApiError(serverMessage(body) ?? `The server returned ${response.status}.`, response.status)
+    throw new ApiError(await failureMessage(response), response.status)
   }
+
+  const body = await readJson(response)
 
   if (body === undefined) {
     throw new ApiError('The server returned an empty response.', response.status)
   }
 
   return body as T
+}
+
+/** The message to show for a failed response, from the server if it sent one. */
+export async function failureMessage(response: Response): Promise<string> {
+  return (
+    serverMessage(await readJson(response)) ?? `The server returned ${response.status}.`
+  )
 }
 
 async function readJson(response: Response): Promise<unknown> {

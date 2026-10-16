@@ -4,10 +4,10 @@ import styles from './styles.css?raw'
 /**
  * The palette in src/styles.css was mapped by hand onto shadcn's token names, so
  * it is checked rather than trusted: every text pair has to stay legible, and
- * every border and focus indicator has to stay distinguishable.
+ * every border and focus indicator has to stay distinguishable. The theme is
+ * dark-only, so there is one set of values and no cascade to worry about.
  */
 function token(name: string): string {
-  // The first definition is the light theme in :root; the dark theme follows it.
   const value = styles.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1]
 
   if (!value) {

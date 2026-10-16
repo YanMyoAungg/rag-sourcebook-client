@@ -1,10 +1,11 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { jsonResponse, stubServer } from '@/test/http'
+import { jsonResponse, openSseResponse, sseFrame, sseResponse, stubServer } from '@/test/http'
 import { ChatPanel } from './ChatPanel'
 
 const SERVER = 'http://localhost:3000'
+const URL_QUERY = 'Where are chunk embeddings stored?'
 
 const ANSWERED = {
   answer: 'Chunk embeddings live in Postgres with pgvector. [chunk-3]',
@@ -18,6 +19,30 @@ const ANSWERED = {
       relevance: 0.6156,
     },
   ],
+}
+
+const RUNNING_STEP = {
+  id: 'step-1',
+  tool: 'search_documents',
+  args: { query: URL_QUERY, limit: 5 },
+  state: 'running' as const,
+}
+
+const COMPLETE_STEP = {
+  ...RUNNING_STEP,
+  state: 'complete' as const,
+  hits: [{ filename: 'guide.md', chunkIndex: 2, relevance: 0.6156 }],
+  durationMs: 18,
+}
+
+/** The frames the server sends for a question it can answer from one passage. */
+function answeredStream(answer: string, result = ANSWERED): Response {
+  return sseResponse([
+    sseFrame('tool', { type: 'tool', step: RUNNING_STEP }),
+    sseFrame('tool', { type: 'tool', step: COMPLETE_STEP }),
+    sseFrame('text-delta', { type: 'text-delta', text: answer }),
+    sseFrame('finish', { type: 'finish', result: { ...result, answer }, durationMs: 2140 }),
+  ])
 }
 
 function setUp() {
@@ -36,28 +61,79 @@ afterEach(() => {
 })
 
 describe('ChatPanel', () => {
-  it('asks the question and shows the answer with the sources it cited', async () => {
+  it('traces the tool it called, then shows the answer with the sources it cited', async () => {
     const user = userEvent.setup()
-    const fetchMock = stubServer(() => jsonResponse(ANSWERED))
+    const fetchMock = stubServer(() => answeredStream(ANSWERED.answer))
     const { ask, question } = setUp()
 
     await user.type(question, 'Where are chunk embeddings stored?')
     await user.click(ask)
 
     expect(await screen.findByText(ANSWERED.answer)).toBeInTheDocument()
+
+    // The tool the answer ran, named as an MCP client would call it.
+    expect(screen.getByText('search_documents')).toBeInTheDocument()
+    expect(screen.getByText('Complete')).toBeInTheDocument()
+    expect(screen.getByText('Answered in 2.1s')).toBeInTheDocument()
+
     const sources = screen.getByRole('list', { name: 'Sources' })
     expect(within(sources).getByText('guide.md · chunk 3')).toBeInTheDocument()
+
     const [url, init] = fetchMock.mock.calls[0]
-    expect(url).toBe(`${SERVER}/api/chat`)
+    expect(url).toBe(`${SERVER}/api/chat/stream`)
     expect(init?.method).toBe('POST')
     expect(JSON.parse(String(init?.body))).toEqual({
       question: 'Where are chunk embeddings stored?',
     })
   })
 
+  it('shows the tool call while it is still running, with the query it was given', async () => {
+    const user = userEvent.setup()
+    stubServer(
+      (_url, init) =>
+        openSseResponse(sseFrame('tool', { type: 'tool', step: RUNNING_STEP }), init?.signal),
+    )
+    const { ask, question } = setUp()
+
+    await user.type(question, 'Where are chunk embeddings stored?')
+    await user.click(ask)
+
+    // Running rows are expanded, so the reader sees what is being asked for.
+    expect(await screen.findByText('Running')).toBeInTheDocument()
+    const row = within(
+      screen.getByText('Running').closest('[data-slot="collapsible"]') as HTMLElement,
+    )
+    expect(row.getByText(URL_QUERY)).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(/searching the sourcebook/i)
+    expect(screen.getByRole('button', { name: /stop/i })).toBeInTheDocument()
+    expect(ask).toBeDisabled()
+  })
+
+  it('stops a question when the reader asks it to', async () => {
+    const user = userEvent.setup()
+    stubServer(
+      (_url, init) =>
+        openSseResponse(sseFrame('tool', { type: 'tool', step: RUNNING_STEP }), init?.signal),
+    )
+    const { ask, question } = setUp()
+
+    await user.type(question, 'Where are chunk embeddings stored?')
+    await user.click(ask)
+    await user.click(await screen.findByRole('button', { name: /stop/i }))
+
+    expect(await screen.findByText('Stopped.')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /stop/i })).not.toBeInTheDocument(),
+    )
+
+    // The box was cleared when the question was sent, so the next one is typed.
+    await user.type(question, 'Where are chunk embeddings stored?')
+    expect(ask).toBeEnabled()
+  })
+
   it('keeps the retrieved passages available to inspect', async () => {
     const user = userEvent.setup()
-    stubServer(() => jsonResponse(ANSWERED))
+    stubServer(() => answeredStream(ANSWERED.answer))
     const { ask, question } = setUp()
 
     await user.type(question, 'Where are chunk embeddings stored?')
@@ -69,14 +145,46 @@ describe('ChatPanel', () => {
     expect(screen.getByText('relevance 0.62')).toBeVisible()
   })
 
-  it('reports an answer with no sources without inventing any', async () => {
+  it('opens a finished tool call to show its parameters and result', async () => {
+    const user = userEvent.setup()
+    stubServer(() => answeredStream(ANSWERED.answer))
+    const { ask, question } = setUp()
+
+    await user.type(question, 'Where are chunk embeddings stored?')
+    await user.click(ask)
+
+    // Finished rows collapse, so a reader opens one to see what it did.
+    const trigger = await screen.findByRole('button', { name: /search_documents/i })
+    await user.click(trigger)
+
+    const row = within(trigger.closest('[data-slot="collapsible"]') as HTMLElement)
+    expect(row.getByText('Parameters')).toBeInTheDocument()
+    expect(row.getByText('query')).toBeInTheDocument()
+    expect(row.getByText(URL_QUERY)).toBeInTheDocument()
+    expect(row.getByText('limit')).toBeInTheDocument()
+    expect(await row.findByText('guide.md · chunk 3')).toBeInTheDocument()
+    expect(row.getByText('0.62')).toBeInTheDocument()
+  })
+
+  it('says so when nothing in the sourcebook matched', async () => {
     const user = userEvent.setup()
     stubServer(() =>
-      jsonResponse({
-        answer: "I couldn't find an answer to that in the indexed documents.",
-        citations: [],
-        retrievedChunks: [],
-      }),
+      sseResponse([
+        sseFrame('tool', { type: 'tool', step: RUNNING_STEP }),
+        sseFrame('tool', {
+          type: 'tool',
+          step: { ...COMPLETE_STEP, hits: [] },
+        }),
+        sseFrame('finish', {
+          type: 'finish',
+          result: {
+            answer: "I couldn't find an answer to that in the indexed documents.",
+            citations: [],
+            retrievedChunks: [],
+          },
+          durationMs: 332,
+        }),
+      ]),
     )
     const { ask, question } = setUp()
 
@@ -86,19 +194,56 @@ describe('ChatPanel', () => {
     expect(
       await screen.findByText("I couldn't find an answer to that in the indexed documents."),
     ).toBeInTheDocument()
-    expect(screen.queryByText(/sources/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(/nothing in the sourcebook matched/i)
+    expect(screen.queryByRole('list', { name: 'Sources' })).not.toBeInTheDocument()
     expect(screen.queryByText(/retrieved passage/i)).not.toBeInTheDocument()
   })
 
-  it("shows the server's reason when the answer fails", async () => {
+  it('keeps earlier questions and answers in the thread', async () => {
     const user = userEvent.setup()
-    stubServer(() => jsonResponse({ error: 'answer generation failed' }, 502))
+    stubServer((_url, init) => {
+      const { question: asked } = JSON.parse(String(init?.body))
+      return answeredStream(`About: ${asked}`)
+    })
+    const { ask, question } = setUp()
+
+    await user.type(question, 'Where are chunk embeddings stored?')
+    await user.click(ask)
+    await screen.findByText('About: Where are chunk embeddings stored?')
+
+    await user.type(question, 'And how are they queried?')
+    await user.click(ask)
+
+    expect(await screen.findByText('About: And how are they queried?')).toBeInTheDocument()
+    expect(screen.getByText('About: Where are chunk embeddings stored?')).toBeInTheDocument()
+    expect(screen.getAllByText('search_documents')).toHaveLength(2)
+  })
+
+  it("reports the server's reason when the answer fails mid-stream", async () => {
+    const user = userEvent.setup()
+    stubServer(() =>
+      sseResponse([
+        sseFrame('tool', { type: 'tool', step: RUNNING_STEP }),
+        sseFrame('error', { type: 'error', message: 'answer generation failed' }),
+      ]),
+    )
     const { ask, question } = setUp()
 
     await user.type(question, 'Where are chunk embeddings stored?')
     await user.click(ask)
 
     expect(await screen.findByRole('alert')).toHaveTextContent('answer generation failed')
+  })
+
+  it("reports the server's reason when the question is refused", async () => {
+    const user = userEvent.setup()
+    stubServer(() => jsonResponse({ error: 'question must not be empty' }, 400))
+    const { ask, question } = setUp()
+
+    await user.type(question, 'Where are chunk embeddings stored?')
+    await user.click(ask)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('question must not be empty')
   })
 
   it('explains a server that cannot be reached', async () => {
@@ -118,7 +263,7 @@ describe('ChatPanel', () => {
 
   it('will not send an empty question', async () => {
     const user = userEvent.setup()
-    stubServer(() => jsonResponse(ANSWERED))
+    stubServer(() => answeredStream(ANSWERED.answer))
     const { ask, question } = setUp()
 
     expect(ask).toBeDisabled()
@@ -130,22 +275,27 @@ describe('ChatPanel', () => {
     expect(ask).toBeEnabled()
   })
 
-  it('reports that it is asking and blocks a second question', async () => {
+  it('sends on Enter, and keeps Shift+Enter as a line break', async () => {
     const user = userEvent.setup()
-    let finish: (response: Response) => void = () => {}
-    stubServer(() => new Promise<Response>((resolve) => (finish = resolve)))
-    const { ask, question } = setUp()
+    const fetchMock = stubServer(() => answeredStream(ANSWERED.answer))
+    const { question } = setUp()
 
-    await user.type(question, 'Where are chunk embeddings stored?')
-    await user.click(ask)
+    await user.type(question, 'Where are chunk embeddings stored?{Shift>}{Enter}{/Shift}')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(question).toHaveValue('Where are chunk embeddings stored?\n')
 
-    expect(await screen.findByRole('status')).toHaveTextContent(/asking/i)
-    expect(ask).toBeDisabled()
+    await user.keyboard('{Enter}')
 
-    finish(jsonResponse(ANSWERED))
+    expect(await screen.findByText(ANSWERED.answer)).toBeInTheDocument()
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({
+      question: 'Where are chunk embeddings stored?',
+    })
+  })
+  it('explains what the thread does before the first question', () => {
+    setUp()
 
-    await waitFor(() => expect(screen.getByText(ANSWERED.answer)).toBeInTheDocument())
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    expect(ask).toBeEnabled()
+    expect(
+      screen.getByText(/Every answer cites the passages it used/),
+    ).toBeInTheDocument()
   })
 })
