@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChatPanel } from '@/components/ChatPanel'
 import { DocumentLibrary } from '@/components/DocumentLibrary'
 import { DocumentUpload } from '@/components/DocumentUpload'
 import { Card, CardContent } from '@/components/ui/card'
@@ -41,8 +42,8 @@ export default function App() {
             Ask
           </h2>
           <Card>
-            <CardContent className="text-sm text-muted-foreground">
-              Questions you ask, and the answers with the passages they cite, appear here.
+            <CardContent>
+              <ChatPanel />
             </CardContent>
           </Card>
         </section>
