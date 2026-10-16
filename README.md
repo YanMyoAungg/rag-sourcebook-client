@@ -59,7 +59,11 @@ server allows by default (`CLIENT_ORIGIN`).
 
 ## Deployment
 
-Deploy the static build to Vercel as a Vite project (`pnpm build`, output
-`dist/`), set `VITE_API_BASE_URL` to the deployed server URL, and set the
-server's `CLIENT_ORIGIN` to the deployed client origin — the server allows only
-that one browser origin through CORS.
+Deployed on Vercel as a Vite project linked to this repository's `main` branch:
+<https://rag-sourcebook-client.vercel.app>. Vercel runs `pnpm build` and serves
+`dist/`, with `VITE_API_BASE_URL` set to
+`https://rag-sourcebook-server.onrender.com` for the production and preview
+environments.
+
+The server's `CLIENT_ORIGIN` must name the deployed client origin, because the
+server allows only that one browser origin through CORS.

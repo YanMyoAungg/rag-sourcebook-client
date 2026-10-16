@@ -32,32 +32,32 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 
 **Files:** `package.json`, `pnpm-lock.yaml`, `tsconfig.json`, `vite.config.ts`, `index.html`, `src/main.tsx`, `src/App.tsx`, `src/styles.css`, `src/lib/utils.ts`, `src/components/ui/`, `.gitignore`, `.env.example`, `README.md`, `vitest.config.ts`.
 
-- [ ] Write a failing test that renders the app shell and document-upload control.
-- [ ] Run the test and confirm it fails because the UI is absent.
-- [ ] Create the Vite/React/TypeScript app, configure Tailwind CSS, initialize shadcn/ui, and implement the smallest accessible app shell.
-- [ ] Run `pnpm test`, `pnpm typecheck`, and `pnpm build`.
+- [x] Write a failing test that renders the app shell and document-upload control.
+- [x] Run the test and confirm it fails because the UI is absent.
+- [x] Create the Vite/React/TypeScript app, configure Tailwind CSS, initialize shadcn/ui, and implement the smallest accessible app shell.
+- [x] Run `pnpm test`, `pnpm typecheck`, and `pnpm build`.
 
 ### Task 2. Implement document upload and library
 
 **Files:** `src/api/documents.ts`, `src/components/DocumentLibrary.tsx`, `src/components/DocumentUpload.tsx`, related tests.
 
-- [ ] Test accepted extensions, rejected extensions, empty files, upload success, and server failure states.
-- [ ] Implement file reading and send `{ filename, content }` to `POST /api/documents`; refresh the list from `GET /api/documents` after success.
-- [ ] Run the focused tests and then the full client suite.
+- [x] Test accepted extensions, rejected extensions, empty files, upload success, and server failure states.
+- [x] Implement file reading and send `{ filename, content }` to `POST /api/documents`; refresh the list from `GET /api/documents` after success.
+- [x] Run the focused tests and then the full client suite.
 
 ### Task 3. Implement chat and evidence display
 
 **Files:** `src/api/chat.ts`, `src/components/ChatPanel.tsx`, `src/components/SourceEvidence.tsx`, related tests.
 
-- [ ] Test submission, loading/error feedback, answer rendering, citations, and retrieved chunks.
-- [ ] Implement chat against `POST /api/chat`; display source filename and chunk index for each citation.
-- [ ] Run the focused tests and then the full client suite.
+- [x] Test submission, loading/error feedback, answer rendering, citations, and retrieved chunks.
+- [x] Implement chat against `POST /api/chat`; display source filename and chunk index for each citation.
+- [x] Run the focused tests and then the full client suite.
 
 ### Task 4. Verify and deploy the client
 
-- [ ] Smoke-test upload, answerable question, citation inspection, and unsupported question against the local server.
-- [ ] Check keyboard access, visible focus, labels, responsive layout, and readable contrast.
-- [ ] Deploy the Vite build to Vercel and set `VITE_API_BASE_URL` to the backend URL.
+- [x] Smoke-test upload, answerable question, citation inspection, and unsupported question against the local server.
+- [x] Check keyboard access, visible focus, labels, responsive layout, and readable contrast.
+- [x] Deploy the Vite build to Vercel and set `VITE_API_BASE_URL` to the backend URL.
 - [ ] Verify the deployed client can reach the server and that server CORS allows only the client’s production origin.
 
 ## Out of scope
