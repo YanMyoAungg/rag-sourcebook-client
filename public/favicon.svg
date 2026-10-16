@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="RAG Sourcebook">
+  <rect width="32" height="32" rx="7" fill="#2563eb" />
+  <path d="M9 8h9l5 5v10a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="#ffffff" />
+  <path d="M18 8l5 5h-4a1 1 0 0 1-1-1z" fill="#bfdbfe" />
+  <path d="M12 17h8M12 21h5" stroke="#2563eb" stroke-width="1.6" stroke-linecap="round" />
+</svg>
