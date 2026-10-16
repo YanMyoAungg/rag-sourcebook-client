@@ -28,7 +28,7 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 
 ## Tasks
 
-### 1. Scaffold the client repository
+### Task 1. Scaffold the client repository
 
 **Files:** `package.json`, `pnpm-lock.yaml`, `tsconfig.json`, `vite.config.ts`, `index.html`, `src/main.tsx`, `src/App.tsx`, `src/styles.css`, `src/lib/utils.ts`, `src/components/ui/`, `.gitignore`, `.env.example`, `README.md`, `vitest.config.ts`.
 
@@ -37,7 +37,7 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 - [ ] Create the Vite/React/TypeScript app, configure Tailwind CSS, initialize shadcn/ui, and implement the smallest accessible app shell.
 - [ ] Run `pnpm test`, `pnpm typecheck`, and `pnpm build`.
 
-### 2. Implement document upload and library
+### Task 2. Implement document upload and library
 
 **Files:** `src/api/documents.ts`, `src/components/DocumentLibrary.tsx`, `src/components/DocumentUpload.tsx`, related tests.
 
@@ -45,7 +45,7 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 - [ ] Implement file reading and send `{ filename, content }` to `POST /api/documents`; refresh the list from `GET /api/documents` after success.
 - [ ] Run the focused tests and then the full client suite.
 
-### 3. Implement chat and evidence display
+### Task 3. Implement chat and evidence display
 
 **Files:** `src/api/chat.ts`, `src/components/ChatPanel.tsx`, `src/components/SourceEvidence.tsx`, related tests.
 
@@ -53,7 +53,7 @@ The matching contract is maintained in `../server/PLAN.md`; do not import backen
 - [ ] Implement chat against `POST /api/chat`; display source filename and chunk index for each citation.
 - [ ] Run the focused tests and then the full client suite.
 
-### 4. Verify and deploy the client
+### Task 4. Verify and deploy the client
 
 - [ ] Smoke-test upload, answerable question, citation inspection, and unsupported question against the local server.
 - [ ] Check keyboard access, visible focus, labels, responsive layout, and readable contrast.
