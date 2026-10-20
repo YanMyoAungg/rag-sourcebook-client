@@ -46,6 +46,14 @@ export function applyEvent(turn: ChatTurn, event: AnswerEvent): ChatTurn {
       }
     case 'error':
       return { ...turn, error: event.message }
+    default: {
+      // The assignment keeps the compiler checking that every known member is
+      // handled. At runtime a newer server may add an event this build does
+      // not know; ignoring it keeps the turn (and the page) intact.
+      const unknown: never = event
+      void unknown
+      return turn
+    }
   }
 }
 

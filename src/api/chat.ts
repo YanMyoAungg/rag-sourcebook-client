@@ -134,11 +134,29 @@ export async function* readEvents(
  * keep-alive comments that hold an idle connection open, carry no event.
  */
 function parseFrame(frame: string): AnswerEvent | null {
-  const data = frame
-    .split('\n')
+  const lines = frame.split('\n')
+  const data = lines
     .filter((line) => line.startsWith('data:'))
     .map((line) => line.slice('data:'.length).trimStart())
     .join('\n')
 
-  return data === '' ? null : (JSON.parse(data) as AnswerEvent)
+  if (data === '') return null
+
+  const parsed: unknown = JSON.parse(data)
+  if (typeof parsed !== 'object' || parsed === null) return null
+
+  if (typeof (parsed as { type?: unknown }).type === 'string') {
+    return parsed as AnswerEvent
+  }
+
+  // Some frames name their type only in the SSE `event:` field. Use it rather
+  // than handing the reducer an event it cannot dispatch on.
+  const eventName = lines
+    .find((line) => line.startsWith('event:'))
+    ?.slice('event:'.length)
+    .trim()
+
+  if (eventName === undefined || eventName === '') return null
+
+  return { ...(parsed as Record<string, unknown>), type: eventName } as AnswerEvent
 }

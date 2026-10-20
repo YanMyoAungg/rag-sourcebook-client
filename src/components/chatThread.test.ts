@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ToolStep } from '@/api/chat'
+import type { AnswerEvent, ToolStep } from '@/api/chat'
 import {
   applyEvent,
   failTurn,
@@ -131,6 +131,14 @@ describe('applyEvent', () => {
     })
 
     expect(turn.error).toBe('answer generation failed')
+  })
+
+  it('leaves the turn untouched for an event type it does not know', () => {
+    const turn = newTurn('t1', 'q')
+
+    // A newer server may add an event; it must not replace the turn with
+    // undefined and take the page down.
+    expect(applyEvent(turn, { type: 'heartbeat' } as unknown as AnswerEvent)).toBe(turn)
   })
 
   it('leaves the steps and text a stopped turn had already received', () => {

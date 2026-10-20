@@ -51,6 +51,11 @@ export function applyEvent(turn: ChatTurn, event: AnswerEvent): ChatTurn {
       return { ...turn, answer: event.result.answer, result: event.result, durationMs: event.durationMs }
     case 'error':
       return { ...turn, error: event.message }
+    default: {
+      const unknown: never = event
+      void unknown
+      return turn
+    }
   }
 }
 ```
@@ -86,9 +91,10 @@ function withStep(steps: ToolStep[], step: ToolStep): ToolStep[] {
 Every case returns a new object. React compares by identity, so a mutation would
 update the data and skip the render.
 
-The switch has no `default` case and the function is annotated `: ChatTurn`. A new
-member added to `AnswerEvent` therefore leaves a reachable end-of-function, which
-the compiler rejects — the reducer cannot silently ignore a new event type.
+The `default` branch assigns the event to `never`, so a new member added to
+`AnswerEvent` is a compile error and the reducer cannot silently forget it. The
+same branch returns the turn unchanged: a frame from a newer or older server
+that this build does not understand must not replace the turn with `undefined`.
 
 ### Two endings the events do not describe
 

@@ -53,6 +53,14 @@ describe('readEvents', () => {
     expect(await collect(body)).toEqual([RUNNING, FINISHED])
   })
 
+  it('takes the event name when a frame carries no type', async () => {
+    // The server used to send `event: error` with only `{ message }` in data.
+    const body = sseResponse([sseFrame('error', { message: 'answer generation failed' })])
+      .body!
+
+    expect(await collect(body)).toEqual([{ type: 'error', message: 'answer generation failed' }])
+  })
+
   it('parses frames that a read splits apart', async () => {
     const frame = sseFrame('tool', RUNNING)
     // A read can end anywhere, including inside a frame's JSON.

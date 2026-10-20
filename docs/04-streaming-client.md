@@ -187,19 +187,29 @@ abort.
  * keep-alive comments that hold an idle connection open, carry no event.
  */
 function parseFrame(frame: string): AnswerEvent | null {
-  const data = frame
-    .split('\n')
+  const lines = frame.split('\n')
+  const data = lines
     .filter((line) => line.startsWith('data:'))
     .map((line) => line.slice('data:'.length).trimStart())
     .join('\n')
 
-  return data === '' ? null : (JSON.parse(data) as AnswerEvent)
+  if (data === '') return null
+
+  const parsed: unknown = JSON.parse(data)
+  if (typeof parsed !== 'object' || parsed === null) return null
+  if (typeof (parsed as { type?: unknown }).type === 'string') return parsed as AnswerEvent
+
+  // Some frames name their type only in the SSE `event:` field.
+  const eventName = lines.find((line) => line.startsWith('event:'))?.slice('event:'.length).trim()
+  if (eventName === undefined || eventName === '') return null
+
+  return { ...(parsed as Record<string, unknown>), type: eventName } as AnswerEvent
 }
 ```
 
-- **Only `data:` lines are read.** The `event:` line the server also writes is
-  ignored, because the payload already carries `type`. One source of truth for
-  the event kind, and no need to trust that the frame name and the body agree.
+- **The payload's `type` wins.** The `event:` line the server writes is normally redundant, because the body already carries `type`.
+- **The `event:` line is the fallback.** An error frame once carried `{ message }` with the kind only in `event: error`; the parser would hand the reducer an event with no `type`, which replaced the turn with `undefined`. The frame name is now used when the body has no discriminator, so an older server cannot white-screen the page.
+- **Malformed payloads are skipped.** A JSON value that is not an object, or that has no usable type from either source, carries no event.
 - **All `data:` lines are joined with `\n`,** which is the SSE rule for a payload
   spanning several lines. The server happens to write a single-line JSON body, but
   the parser does not depend on that.
